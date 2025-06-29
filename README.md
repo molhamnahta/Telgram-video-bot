@@ -1,5 +1,3 @@
-# Telgram-video-bot
- Telgram bot for downloading videos
 import os
 import logging
 import requests
@@ -9,7 +7,8 @@ import yt_dlp
 import asyncio
 import nest_asyncio
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")  # التوكن من متغيرات البيئة
+# ضع توكن البوت هنا مباشرة أو استخدم متغير بيئة
+BOT_TOKEN = "7571947352:AAHoC4-gkJ9b6qQzG9wgR4Dj6ElAqRI3lJY"
 
 nest_asyncio.apply()
 logging.basicConfig(level=logging.INFO)
@@ -20,7 +19,6 @@ def download_video(url):
         'outtmpl': 'video.%(ext)s',
         'noplaylist': True,
         'merge_output_format': 'mp4',
-        # لتجنب مشاكل بعض المواقع مثل تيك توك
         'quiet': True,
         'no_warnings': True,
         'ignoreerrors': True,
@@ -42,10 +40,12 @@ def upload_to_gofile(file_path):
             raise Exception("فشل رفع الملف إلى GoFile")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("👋 أهلاً! أرسل لي رابط فيديو من تيك توك، لايكا، إنستغرام أو فيسبوك وسأحمل لك الفيديو.")
+    await update.message.reply_text(
+        "👋 أهلاً! أرسل لي رابط فيديو من يوتيوب، تيك توك، لايكا، إنستغرام أو فيسبوك."
+    )
 
 async def handle_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    url = update.message.text
+    url = update.message.text.strip()
     await update.message.reply_text("⏳ جاري تحميل الفيديو...")
 
     try:
@@ -54,7 +54,8 @@ async def handle_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
         size_mb = os.path.getsize(file_path) / (1024 * 1024)
 
         if size_mb <= 50:
-            await update.message.reply_video(video=open(file_path, 'rb'))
+            with open(file_path, 'rb') as video_file:
+                await update.message.reply_video(video=video_file)
         else:
             link = upload_to_gofile(file_path)
             await update.message.reply_text(f"📎 الفيديو كبير، تم رفعه هنا:\n{link}")
@@ -70,4 +71,5 @@ async def main():
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_link))
     await app.run_polling()
 
-asyncio.run(main())
+if __name__ == '__main__':
+    asyncio.run(main())
